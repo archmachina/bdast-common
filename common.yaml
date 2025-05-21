@@ -17,7 +17,11 @@ steps:
 
   test:
 
+  lint:
+
   test_run:
+    depends_on:
+      - build
     required_by:
       - test
     bash:
@@ -103,4 +107,8 @@ actions:
             semver_source: "{{ env.GITHUB_REF }}"
       - build
       - release
+
+  lint:
+    steps:
+      - lint
 

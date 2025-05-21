@@ -23,6 +23,23 @@ steps:
     command:
       cmd: rm -rf ./{{ python_venv_dir }}/
 
+  python_lint:
+    required_by:
+      - lint
+    block:
+      steps:
+        - desc: Ensure pylint and black installed
+          bash:
+            cmd: pip install black pylint
+
+        - desc: pylint src directory
+          bash:
+            cmd: pylint src
+
+        - desc: black src directory
+          bash:
+            cmd: black --diff src
+
   python_build:
     required_by:
       - build
