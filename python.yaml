@@ -15,13 +15,15 @@ steps:
     required_by:
       - clean
     command:
-      cmd: rm -rf ./{{ python_dist_dir }}/
+      cmd: >
+        rm -rf "./{{ python_dist_dir }}/"
 
   clean_venv:
     required_by:
       - clean
     command:
-      cmd: rm -rf ./{{ python_venv_dir }}/
+      cmd: >
+        rm -rf "./{{ python_venv_dir }}/"
 
   python_lint:
     required_by:
