@@ -42,6 +42,6 @@ steps:
           "prerelease": {{ 'true' if version.is_prerelease else 'false' }},
           "generate_release_notes": true
         }
-      when:
-        - "github_release"
+    when:
+      - "github_release"
 
