@@ -1,0 +1,56 @@
+---
+
+# Docker build steps
+
+version: 2alpha
+
+vars:
+  docker_file: "./src/Dockerfile"
+  docker_dir: "./src"
+
+  docker_host: "docker.io"
+  docker_build_args: []
+
+steps:
+
+  docker_lint:
+    during:
+      - +lint
+    bash:
+      cmd: >-
+        docker run --rm -i hadolint/hadolint < "{{ docker_file }}"
+
+  docker_build:
+    during:
+      - +build
+    bash:
+      cmd: >-
+        docker build -q -f "{{ docker_file }}"
+        {% for build_arg in docker_build_args %}
+        --build-arg "{{ build_arg }}"
+        {% endfor %}
+        "{{ docker_dir }}"
+      capture_strip: true
+      capture: docker_build_sha
+
+  docker_push:
+    depends_on:
+      - docker_build
+    block:
+      - name: Docker login
+        bash:
+          cmd: >-
+            docker login --password-stdin
+            -u "{{ docker_username }}"
+            "{{ docker_host }}" < <(echo "$DOCKER_TOKEN")
+          env:
+            DOCKER_TOKEN: "{{ docker_token }}"
+
+      - name: Docker push
+        bash:
+          cmd: |
+            {% for tag_name in docker_tags %}
+            docker tag "{{ docker_build_sha }}" "{{ docker_image }}:{{ tag_name }}" || exit 1
+            docker push "{{ docker_image }}:{{ tag_name }}" || exit 1
+            {% endfor %}
+

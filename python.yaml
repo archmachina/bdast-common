@@ -7,25 +7,28 @@ version: 2alpha
 vars:
   python_venv_dir: "env"
   python_dist_dir: "dist"
+
   twine_username: "__token__"
   twine_password: "{{ env.SECRET_PYPI_TOKEN }}"
 
 steps:
   clean_dist:
-    required_by:
-      - clean
+    during:
+      - +clean
     command:
-      cmd: rm -rf ./{{ python_dist_dir }}/
+      cmd: >-
+        rm -rf "./{{ python_dist_dir }}/"
 
   clean_venv:
-    required_by:
-      - clean
+    during:
+      - +clean
     command:
-      cmd: rm -rf ./{{ python_venv_dir }}/
+      cmd: >-
+        rm -rf "./{{ python_venv_dir }}/"
 
   python_lint:
-    required_by:
-      - lint
+    during:
+      - +lint
     block:
       steps:
         - desc: Ensure pylint and black installed
@@ -41,19 +44,18 @@ steps:
             cmd: black --diff src
 
   python_build:
-    required_by:
-      - build
+    during:
+      - +build
     after:
-      - clean
+      - +clean
       - clean_venv
     depends_on:
       - clean_dist
-      - version
     block:
       steps:
         - desc: Set up python environment
           bash:
-            cmd: >
+            cmd: >-
               python3 -m venv "{{ python_venv_dir }}" &&
               source "./{{ python_venv_dir }}/bin/activate" &&
               python3 -m pip install --upgrade pip &&
@@ -61,7 +63,7 @@ steps:
 
         - desc: Install pip requirements
           bash:
-            cmd: >
+            cmd: >-
               python3 -m pip install -r requirements.txt
 
         - desc: Perform python build
@@ -73,14 +75,11 @@ steps:
 
   pypi_release:
     depends_on:
-      - clean_dist
       - python_build
-    required_by:
-      - release
     bash:
-      cmd: >
+      cmd: >-
         source "./{{ python_venv_dir }}/bin/activate" &&
-        python3 -m twine upload ./{{ python_dist_dir }}/*
+        python3 -m twine upload "./{{ python_dist_dir }}"/*
       env:
         TWINE_USERNAME: "{{ twine_username }}"
         TWINE_PASSWORD: "{{ twine_password }}"
