@@ -5,6 +5,9 @@
 version: 2alpha
 
 vars:
+  super_linter_mount: "./"
+  super_linter_tag: "latest"
+  super_linter_enable: false
 
 steps:
 
@@ -43,4 +46,27 @@ steps:
             sources:
               - "0.1.0-rolling+{{ git_sha }}"
             store: version
+
+  super_linter:
+    name: Run github super linter
+    during:
+      - +lint
+    command:
+      cmd: >-
+        docker run --rm
+        -e RUN_LOCAL=true
+        -e DEFAULT_BRANCH=main
+        -e IGNORE_GITIGNORED_FILES=true
+        -v "{{ super_linter_mount }}":/tmp/lint
+        ghcr.io/super-linter/super-linter:"{{ super_linter_tag }}"
+    when:
+      - "super_linter_enable"
+
+actions:
+
+  super_linter:
+    vars:
+      super_linter_enable: true
+    steps:
+      - super_linter
 
