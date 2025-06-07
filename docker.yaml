@@ -37,20 +37,21 @@ steps:
     depends_on:
       - docker_build
     block:
-      - name: Docker login
-        bash:
-          cmd: >-
-            docker login --password-stdin
-            -u "{{ docker_username }}"
-            "{{ docker_host }}" < <(echo "$DOCKER_TOKEN")
-          env:
-            DOCKER_TOKEN: "{{ docker_token }}"
+      steps:
+        - name: Docker login
+          bash:
+            cmd: >-
+              docker login --password-stdin
+              -u "{{ docker_username }}"
+              "{{ docker_host }}" < <(echo "$DOCKER_TOKEN")
+            env:
+              DOCKER_TOKEN: "{{ docker_token }}"
 
-      - name: Docker push
-        bash:
-          cmd: |
-            {% for tag_name in docker_tags %}
-            docker tag "{{ docker_build_sha }}" "{{ docker_image }}:{{ tag_name }}" || exit 1
-            docker push "{{ docker_image }}:{{ tag_name }}" || exit 1
-            {% endfor %}
+        - name: Docker push
+          bash:
+            cmd: |
+              {% for tag_name in docker_tags %}
+              docker tag "{{ docker_build_sha }}" "{{ docker_image }}:{{ tag_name }}" || exit 1
+              docker push "{{ docker_image }}:{{ tag_name }}" || exit 1
+              {% endfor %}
 
