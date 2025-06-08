@@ -10,7 +10,6 @@ vars:
   super_linter_enable: false
 
   github_token: "{{ env.SECRET_GITHUB_TOKEN }}"
-  github_release: false
 
 steps:
 
@@ -61,8 +60,6 @@ steps:
       sources:
         - "{{ env.GITHUB_REF }}"
       store: version
-    when:
-      - "github_release"
 
   github_release:
     name: Create GitHub release
@@ -84,8 +81,6 @@ steps:
           "prerelease": {{ 'true' if version.is_prerelease else 'false' }},
           "generate_release_notes": true
         }
-    when:
-      - "github_release"
 
   super_linter:
     name: Run github super linter
