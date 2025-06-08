@@ -32,6 +32,31 @@ steps:
       capture: git_sha
       capture_strip: true
 
+  git_latest_tag:
+    block:
+      steps:
+
+        - name: List git tags
+          bash:
+            cmd: >-
+              git tag --sort v:refname
+
+        - name: Get latest git tag
+          bash:
+            cmd: >-
+              git describe --tags --abbrev=0 || echo ""
+            capture: git_latest_tag
+            capture_strip: true
+
+  git_tag_notes:
+    name: Notes since last tag
+    depends_on:
+      - git_latest_tag
+    bash:
+      cmd: >-
+        git log --oneline --no-decorate "{{ git_latest_tag }}"..HEAD
+      #capture: git_tag_notes
+
   # Generate the version for the build
   version:
     depends_on:
@@ -146,4 +171,8 @@ actions:
       super_linter_enable: true
     steps:
       - super_linter
+
+  tag_notes:
+    steps:
+      - git_tag_notes
 
