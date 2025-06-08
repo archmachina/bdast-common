@@ -38,7 +38,7 @@ steps:
       - git_sha
     after:
       - +prebuild
-    before:
+    required_by:
       - +build
     block:
       steps:
