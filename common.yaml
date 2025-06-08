@@ -54,8 +54,8 @@ steps:
       - git_latest_tag
     bash:
       cmd: >-
-        git log --oneline --no-decorate "{{ git_latest_tag }}"..HEAD
-      #capture: git_tag_notes
+        git log --format=%s "{{ git_latest_tag }}"..HEAD
+      capture: git_tag_notes
 
   # Generate the version for the build
   version:
