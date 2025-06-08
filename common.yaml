@@ -9,6 +9,9 @@ vars:
   super_linter_tag: "latest"
   super_linter_enable: false
 
+  github_token: "{{ env.SECRET_GITHUB_TOKEN }}"
+  github_release: false
+
 steps:
 
   +clean:
@@ -47,6 +50,43 @@ steps:
               - "0.1.0-rolling+{{ git_sha }}"
             store: version
 
+  github_version:
+    name: Capture semver information from GITHUB_REF
+    during:
+      - +prebuild
+    before:
+      - default_version
+    semver:
+      required: true
+      sources:
+        - "{{ env.GITHUB_REF }}"
+      store: version
+    when:
+      - "github_release"
+
+  github_release:
+    name: Create GitHub release
+    depends_on:
+      - github_version
+    url:
+      method: POST
+      url: "https://api.github.com/repos/{{ github_owner }}/{{ github_repo }}/releases"
+      headers:
+        "Accept": "application/vnd.github.v3+json"
+        "Authorization": "token {{ github_token }}"
+        "Content-Type": "application/json"
+        "X-GitHub-Api-Version": "2022-11-28"
+      body: |
+        {
+          "tag_name": "{{ version.post_discard }}",
+          "name": "Version {{ version.full }}",
+          "draft": false,
+          "prerelease": {{ 'true' if version.is_prerelease else 'false' }},
+          "generate_release_notes": true
+        }
+    when:
+      - "github_release"
+
   super_linter:
     name: Run github super linter
     during:
@@ -63,6 +103,43 @@ steps:
       - "super_linter_enable"
 
 actions:
+
+  clean:
+    steps:
+      - +clean
+
+  test:
+    steps:
+      - +test
+
+  # Standard build
+  build:
+    steps:
+      - +build
+
+  # Steps for a pull request to the main branch
+  pr_branch_main:
+    steps:
+      - +build
+      - +test
+
+  # Steps to perform when building on main branch
+  push_branch_main:
+    steps:
+      - +build
+      - +test
+
+  # Steps to perform when building from a git tag v*
+  push_tag_v:
+    vars:
+      github_release: true
+    steps:
+      - +build
+      - github_release
+
+  lint:
+    steps:
+      - +lint
 
   super_linter:
     vars:
