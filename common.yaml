@@ -25,41 +25,46 @@ steps:
 
   +lint:
 
-  # Generate a default version for the build, if nothing else
-  # generates one
-  default_version:
+  git_sha:
+    name: Extract git sha from repo
+    bash:
+      cmd: git log -1 --format=%h
+      capture: git_sha
+      capture_strip: true
+
+  # Generate the version for the build
+  version:
     depends_on:
+      - git_sha
+    after:
       - +prebuild
-    required_by:
+    before:
       - +build
-    when:
-      - "version|default('') == ''"
     block:
       steps:
-        - name: Extract git sha from repo
-          bash:
-            cmd: git log -1 --format=%h
-            capture: git_sha
-            capture_strip: true
+        # Generate a default version, if no version source
+        # has been specified
+        - name: Set default version source
+          vars:
+            set:
+              version_source: "0.1.0-rolling+{{ git_sha }}"
+          when:
+            - "version_source|default('') == ''"
 
         - name: Parse default version source
           semver:
             required: true
             sources:
-              - "0.1.0-rolling+{{ git_sha }}"
+              - "{{ version_source }}"
             store: version
 
   github_version:
     name: Capture semver information from GITHUB_REF
-    during:
-      - +prebuild
     before:
       - default_version
-    semver:
-      required: true
-      sources:
-        - "{{ env.GITHUB_REF }}"
-      store: version
+    vars:
+      set:
+        version_source: "{{ env.GITHUB_REF }}"
 
   github_release:
     name: Create GitHub release
