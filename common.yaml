@@ -57,6 +57,18 @@ steps:
         git log --format=%s "{{ git_latest_tag }}"..HEAD
       capture: git_tag_notes
 
+  git_release:
+    name: Generate release
+    depends_on:
+      - git_tag_notes
+    bash:
+      cmd: |-
+        TAG="{{ bdast.action_arg }}"
+        [ "$TAG" == "" ] && echo "Missing tag name" && exit 1
+        git tag -a "$TAG" -F - <<__EOF__
+        {{ git_tag_notes }}
+        __EOF__
+
   # Generate the version for the build
   version:
     depends_on:
@@ -175,4 +187,8 @@ actions:
   tag_notes:
     steps:
       - git_tag_notes
+
+  release:
+    steps:
+      - git_release
 
