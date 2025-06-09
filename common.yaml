@@ -61,13 +61,22 @@ steps:
     name: Generate release
     depends_on:
       - git_tag_notes
-    bash:
-      cmd: |-
-        TAG="{{ bdast.action_arg }}"
-        [ "$TAG" == "" ] && echo "Missing tag name" && exit 1
-        git tag -a "$TAG" -F - <<__EOF__
-        {{ git_tag_notes }}
-        __EOF__
+    block:
+      steps:
+
+        - name: Apply tag
+          bash:
+            cmd: |-
+              TAG="{{ bdast.action_arg }}"
+              [ "$TAG" == "" ] && echo "Missing tag name" && exit 1
+              [[ "$TAG" != v* ]] && echo "Tag does not start with v" && exit 1
+              git tag -a "$TAG" -F - <<__EOF__
+              {{ git_tag_notes }}
+              __EOF__
+
+        - name: Show tag
+          bash:
+            cmd: git show "{{ bdast.action_arg }}"
 
   # Generate the version for the build
   version:
