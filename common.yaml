@@ -54,7 +54,7 @@ steps:
       - git_latest_tag
     bash:
       cmd: >-
-        git log --format=%s "{{ git_latest_tag }}"..HEAD
+        git log --no-merges --format=%s "{{ git_latest_tag }}"..HEAD
       capture: git_tag_notes
 
   git_release:
@@ -71,6 +71,8 @@ steps:
               [ "$TAG" == "" ] && echo "Missing tag name" && exit 1
               [[ "$TAG" != v* ]] && echo "Tag does not start with v" && exit 1
               git tag -a "$TAG" -F - <<__EOF__
+              Version $TAG
+
               {{ git_tag_notes }}
               __EOF__
 
