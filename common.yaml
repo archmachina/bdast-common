@@ -11,6 +11,8 @@ vars:
 
   github_token: "{{ env.SECRET_GITHUB_TOKEN }}"
 
+  container_test: true
+
 steps:
 
   +clean:
@@ -149,6 +151,14 @@ steps:
         ghcr.io/super-linter/super-linter:"{{ super_linter_tag }}"
     when:
       - "super_linter_enable"
+
+  container_test:
+    during:
+      - +test
+    command:
+      cmd: dfbar -f ./src/Dockerfile -m test ./src
+    when:
+      - "container_test"
 
 actions:
 
