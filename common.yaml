@@ -80,7 +80,7 @@ steps:
 
         - name: Show tag
           bash:
-            cmd: git show "{{ bdast.action_arg }}"
+            cmd: git show --no-patch "{{ bdast.action_arg }}"
 
   # Generate the version for the build
   version:
