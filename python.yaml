@@ -33,7 +33,7 @@ steps:
       steps:
         - name: Ensure pylint and black installed
           bash:
-            cmd: pip install black pylint
+            cmd: pip install --upgrade black pylint
 
         - name: pylint src directory
           bash:
