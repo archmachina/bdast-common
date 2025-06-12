@@ -23,10 +23,6 @@ steps:
           command:
             cmd: pip install dfbar
 
-        - name: Check GitHub client is installed
-          command:
-            cmd: gh --version
-
   env_info:
     name: Display environment info
     bash:
@@ -77,6 +73,10 @@ steps:
       - next_env
     block:
       steps:
+        - name: Check GitHub client is installed
+          command:
+            cmd: gh --version
+
         - name: Fetch all for git repo
           command:
             cmd: git fetch --all
