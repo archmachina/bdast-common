@@ -50,8 +50,9 @@ steps:
 
   next_env:
     name: Determine next environment
+    # Use command for this as it will also display the output in the terminal
     command:
-      cmd: "{{ environments[env_name]['next']|default('') }}"
+      cmd: "echo {{ environments[env_name]['next']|default('') }}"
       capture: next_env
       capture_strip: true
 
