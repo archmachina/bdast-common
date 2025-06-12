@@ -1,0 +1,123 @@
+---
+
+version: 2alpha
+
+vars:
+  github_token: ""
+  env_name: "{{ bdast.action_arg }}"
+  environments:
+    dev:
+      next: test
+    test:
+      next: prod
+    prod:
+      next:
+
+steps:
+
+  env_setup:
+    name: Ensure environment is set up
+    block:
+      steps:
+        - name: Ensure dfbar is installed
+          command:
+            cmd: pip install dfbar
+
+        - name: Check GitHub client is installed
+          command:
+            cmd: gh --version
+
+  env_info:
+    name: Display environment info
+    bash:
+      cmd: |
+        echo "Running against environment: {{ env_name }}"
+        echo "{{ environments[env_name] }}"
+
+  diff:
+    depends_on:
+      - env_setup
+      - env_info
+    command:
+      cmd: dfbar -s -v -b -m diff ./deploy/docker
+      env:
+        ENV_NAME: "{{ env_name }}"
+
+  apply:
+    depends_on:
+      - env_setup
+      - env_info
+    command:
+      cmd: dfbar -s -v -b -m apply ./deploy/docker
+      env:
+        ENV_NAME: "{{ env_name }}"
+
+  next_env:
+    name: Determine next environment
+    command:
+      cmd: "{{ environments[env_name]['next']|default('') }}"
+      capture: next_env
+      capture_strip: true
+
+  diff_next:
+    depends_on:
+      - env_setup
+      - env_info
+      - next_env
+    command:
+      cmd: dfbar -s -v -b -m diff ./deploy/docker
+      env:
+        ENV_NAME: "{{ next_env }}"
+    when:
+      - "next_env != ''"
+
+  promote:
+    name: Promote environment
+    depends_on:
+      - next_env
+    block:
+      steps:
+        - name: Fetch all for git repo
+          command:
+            cmd: git fetch --all
+
+        - name: Create the PR (ignore failure)
+          bash:
+            cmd: >-
+              gh pr create --base "{{ next_env }}"
+              --head "{{ env_name }}"
+              --title "Promote {{ env_name }} to {{ next_env }}"
+              --body "" || exit 0
+            env:
+              GH_TOKEN: "{{ github_token }}"
+
+        - name: Update the PR
+          bash:
+            cmd: >-
+              gh pr edit "{{ env_name }}"
+              --base "{{ next_env }}"
+              --title "Promote {{ env_name }} to {{ next_env }}"
+              -F - < <(git log --oneline --no-decorate
+              --no-merges "origin/{{ env_name }}"
+              "^origin/{{ next_env }}")
+            env:
+              GH_TOKEN: "{{ github_token }}"
+
+actions:
+
+  apply:
+    steps:
+      - apply
+
+  diff:
+    steps:
+      - diff
+
+  diff_next:
+    steps:
+      - diff_next
+
+  promote:
+    steps:
+      - promote
+
