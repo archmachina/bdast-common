@@ -155,8 +155,15 @@ steps:
   container_test:
     during:
       - +test
-    command:
-      cmd: dfbar -f ./src/Dockerfile -m test ./src
+    block:
+      steps:
+        - name: Ensure dfbar is installed
+          command:
+            cmd: pip install dfbar
+
+        - name: Run dockerfile as a test image
+          command:
+            cmd: dfbar -f ./src/Dockerfile -m test ./src
     when:
       - "container_test"
 
