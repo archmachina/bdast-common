@@ -52,7 +52,9 @@ steps:
     name: Determine next environment
     # Use command for this as it will also display the output in the terminal
     command:
-      cmd: "echo {{ environments[env_name]['next']|default('') }}"
+      cmd: >-
+        echo {{ environments[env_name]['next']|default('') if
+        environments[env_name]['next']|default('') is not none else '' }}
       capture: next_env
       capture_strip: true
 
@@ -105,6 +107,10 @@ steps:
               GH_TOKEN: "{{ github_token }}"
 
 actions:
+
+  next_env:
+    steps:
+      - next_env
 
   apply:
     steps:
