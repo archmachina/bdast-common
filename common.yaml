@@ -37,27 +37,41 @@ steps:
   git_latest_tag:
     block:
       steps:
+        - name: Default latest tag
+          vars:
+            set:
+              git_latest_tag: ""
 
         - name: List git tags
           bash:
             cmd: >-
               git tag --sort v:refname
+            capture: git_tags
+            capture_strip: true
 
         - name: Get latest git tag
           bash:
             cmd: >-
-              git describe --tags --abbrev=0 || echo ""
+              git describe --tags --abbrev=0
             capture: git_latest_tag
             capture_strip: true
+          when:
+            - "git_tags != ''"
 
   git_tag_notes:
     name: Notes since last tag
     depends_on:
       - git_latest_tag
     bash:
-      cmd: >-
-        git log --no-merges --format=%s "{{ git_latest_tag }}"..HEAD
+      cmd: |
+        if [ "$REF" == "" ] ; then
+          git log --no-merges --format=%s HEAD
+        else
+          git log --no-merges --format=%s HEAD "^$REF"
+        fi
       capture: git_tag_notes
+      env:
+        REF: "{{ git_latest_tag }}"
 
   git_release:
     name: Generate release
